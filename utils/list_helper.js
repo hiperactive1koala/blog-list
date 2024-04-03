@@ -22,8 +22,19 @@ const mostBlogs = (blogs) => {
     (e) => _.size(e),
   );
   const author = _.max(Object.keys(authorListObj), (o) => authorListObj[o]);
-  console.log(author, authorListObj[author]);
   return { author, blogs: authorListObj[author] };
+};
+const mostLikes = (blogs) => {
+  const authorListObj = _.mapValues(
+    _.groupBy(blogs, 'author'),
+    (e) => _.sumBy(e, 'likes'),
+
+  );
+  const author = _.maxBy(Object.keys(authorListObj), (o) => authorListObj[o]);
+  return {
+    author,
+    likes: authorListObj[author],
+  };
 };
 
 module.exports = {
@@ -31,4 +42,5 @@ module.exports = {
   totalLikes,
   favoriteBlog,
   mostBlogs,
+  mostLikes,
 };
