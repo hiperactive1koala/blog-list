@@ -14,20 +14,23 @@ const helper = require('./test_helper');
 const Blog = require('../models/blog');
 
 beforeEach(async () => {
-  await Blog.deleteMany({});
-  //   console.log('cleared');
+  await Blog
+    .deleteMany({})
+    .set({ Authorization: process.env.TEST_TOKEN });
 
-  for (const blog of helper.initialNotes) {
+  for (const blog of helper.initialBlogs) {
     const blogObject = new Blog(blog);
     // eslint-disable-next-line no-await-in-loop
-    await blogObject.save();
-    // console.log('saved');
+    await blogObject
+      .set({ Authorization: process.env.TEST_TOKEN })
+      .save();
   }
-//   console.log('done');
 });
 
 test('blog api get test', async () => {
-  await api.get('/api/blogs')
+  await api
+    .get('/api/blogs')
+    .set({ Authorization: process.env.TEST_TOKEN })
     .expect(200)
     .expect('Content-Type', /application\/json/);
 });
@@ -37,26 +40,31 @@ test('blog api post test', async () => {
     title: 'Tons of Error',
     author: 'An idiot',
     url: 'anidiot.com',
+    user: '667b3e014817d8b4fd1f6d3a',
   };
 
   await api
     .post('/api/blogs')
     .send(blog)
+    .set({ Authorization: process.env.TEST_TOKEN })
     .expect(201)
     .expect('Content-Type', /application\/json/);
-
   const blogsAtEnd = await helper.blogsInDb();
-  assert.strictEqual(blogsAtEnd.length, helper.initialNotes.length + 1);
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1);
 });
 
 test('unique identifier test', async () => {
-  const response = await api.get('/api/blogs');
+  const response = await api
+    .get('/api/blogs')
+    .set({ Authorization: process.env.TEST_TOKEN });
 
   assert(response.body.map((e) => Object.prototype.hasOwnProperty.call(e, 'id')));
 });
 
 test('missing likes be zero', async () => {
-  const response = await api.get('/api/blogs');
+  const response = await api
+    .get('/api/blogs')
+    .set({ Authorization: process.env.TEST_TOKEN });
 
   const likes = response.body.map((e) => e.likes);
   likes.forEach((e) => {
@@ -73,6 +81,7 @@ test('missing url or title return 400', async () => {
   await api
     .post('/api/blogs')
     .send(blog)
+    .set('Authorization', process.env.TEST_TOKEN)
     .expect(400);
 });
 
@@ -82,6 +91,7 @@ test('a blog can be delete', async () => {
 
   await api
     .delete(`/api/blogs/${blogToDelete.id}`)
+    .set('Authorization', process.env.TEST_TOKEN)
     .expect(204);
 
   const blogsAtEnd = await helper.blogsInDb();
@@ -98,6 +108,7 @@ test('updating the information of an individual blog post', async () => {
   await api
     .put(`/api/blogs/${blogToUpdate.id}`)
     .send(blogToUpdate)
+    .set('Authorization', process.env.TEST_TOKEN)
     .expect(201);
 
   const blogsAtEnd = await helper.blogsInDb();
