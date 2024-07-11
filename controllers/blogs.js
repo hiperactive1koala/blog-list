@@ -2,13 +2,7 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 const BlogsRoute = require('express').Router();
 const Blog = require('../models/blog');
-
-// const getTokenAuthorization = (request) => {
-//   const authorization = request.get('authorization');
-//   if (authorization && authorization.startsWith('Bearer ')) {
-//     return authorization.replace('Bearer ', '');
-//   }
-// };
+const middleware = require('../utils/middleware');
 
 BlogsRoute.get('/', async (request, response) => {
   const blogs = await Blog
@@ -17,16 +11,9 @@ BlogsRoute.get('/', async (request, response) => {
   response.json(blogs);
 });
 
-BlogsRoute.post('/', async (request, response) => {
-  const { body } = request;
+BlogsRoute.post('/', middleware.userExtractor, async (request, response) => {
+  const { body, user } = request;
 
-  // const decodedToken = jwt.verify(body.token, process.env.SECRET);
-  // if (!decodedToken.id) {
-  //   return response.status(401).json({ error: 'invalid token' }).end();
-  // }
-  // const user = await User.findById(decodedToken.id);
-
-  const { user } = request;
   const blog = new Blog({
     title: body.title,
     author: body.author,
@@ -46,13 +33,10 @@ BlogsRoute.post('/', async (request, response) => {
   return response.status(201).json(savedBlog).end();
 });
 
-BlogsRoute.delete('/:id', async (request, response) => {
-  // const decodedToken = jwt.verify(request.body.token, process.env.SECRET);
-  // if (!decodedToken.id) {
-  //   return response.status(401).json({ error: 'invalid token' });
-  // }
+BlogsRoute.delete('/:id', middleware.userExtractor, async (request, response) => {
   const blog = await Blog.findById(request.params.id);
   const { user } = request;
+
   if (blog.user.toString() === user.id) {
     await blog.deleteOne();
     return response.status(204).end();
@@ -60,9 +44,8 @@ BlogsRoute.delete('/:id', async (request, response) => {
   return response.status(400).json({ error: 'not authorized user' }).end();
 });
 
-BlogsRoute.put('/:id', async (request, response) => {
-  // eslint-disable-next-line prefer-destructuring
-  const body = request.body;
+BlogsRoute.put('/:id', middleware.userExtractor, async (request, response) => {
+  const { body } = request;
 
   const blog = {
     title: body.title,
@@ -72,9 +55,18 @@ BlogsRoute.put('/:id', async (request, response) => {
     user: body.user.id,
   };
 
-  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true });
-  // console.log(updatedBlog);
-  response.status(201).json(updatedBlog);
+  const { user } = request;
+  // if (blog.user.toString() === user.id) {
+  //   const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true });
+  //   response.status(201).json(updatedBlog);
+  // } else {
+  //   return response.status(400).json({ error: 'not authorized user' }).end();
+  // }
+  if (user) {
+    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true });
+    return response.status(201).json(updatedBlog);
+  }
+  return response.status(400).json({ error: 'not authorized user' }).end();
 });
 
 module.exports = BlogsRoute;

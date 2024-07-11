@@ -27,10 +27,8 @@ app.use(cors());
 app.use(express.json());
 // app.use(middleware.requestLogger);
 
-app.use(middleware.tokenExtractor);
-
 app.use('/api/login', loginRouter);
-app.use('/api/blogs', middleware.userExtractor, BlogsRoute);
+app.use('/api/blogs', middleware.tokenExtractor, BlogsRoute);
 app.use('/api/users', userRouter);
 
 // app.use(middleware.unknownEndpoint);
