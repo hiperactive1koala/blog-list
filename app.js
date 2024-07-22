@@ -31,6 +31,12 @@ app.use('/api/login', loginRouter);
 app.use('/api/blogs', middleware.tokenExtractor, BlogsRoute);
 app.use('/api/users', userRouter);
 
+if (process.env.NODE_ENV === 'test') {
+  // eslint-disable-next-line global-require
+  const testRouter = require('./controllers/testing');
+  app.use('/api/testing', testRouter);
+}
+
 // app.use(middleware.unknownEndpoint);
 app.use(middleware.errorHandler);
 

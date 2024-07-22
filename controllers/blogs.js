@@ -19,7 +19,7 @@ BlogsRoute.post('/', middleware.userExtractor, async (request, response) => {
     author: body.author,
     url: body.url,
     likes: body.likes,
-    user: user.id,
+    user,
   });
 
   if (!blog.title || !blog.url) {
@@ -56,12 +56,14 @@ BlogsRoute.put('/:id', middleware.userExtractor, async (request, response) => {
   };
 
   const { user } = request;
+
   // if (blog.user.toString() === user.id) {
   //   const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true });
   //   response.status(201).json(updatedBlog);
   // } else {
   //   return response.status(400).json({ error: 'not authorized user' }).end();
   // }
+
   if (user) {
     const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true });
     return response.status(201).json(updatedBlog);
