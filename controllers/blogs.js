@@ -46,6 +46,7 @@ BlogsRoute.delete('/:id', middleware.userExtractor, async (request, response) =>
 
 BlogsRoute.put('/:id', middleware.userExtractor, async (request, response) => {
   const { body } = request;
+  const { user } = request;
 
   const blog = {
     title: body.title,
@@ -55,20 +56,24 @@ BlogsRoute.put('/:id', middleware.userExtractor, async (request, response) => {
     user: body.user.id,
   };
 
-  const { user } = request;
-
-  // if (blog.user.toString() === user.id) {
-  //   const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true });
-  //   response.status(201).json(updatedBlog);
-  // } else {
-  //   return response.status(400).json({ error: 'not authorized user' }).end();
-  // }
-
   if (user) {
     const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true });
+    updatedBlog.save()
     return response.status(201).json(updatedBlog);
   }
   return response.status(400).json({ error: 'not authorized user' }).end();
 });
+
+BlogsRoute.post('/:id/comments', async (request, response) => {
+  const { body } = request;
+  
+  const foundBlog = await Blog.findById(body.id)
+  if( !foundBlog.comments) foundBlog.comments = []
+  
+  const changedBlog = await Blog.findByIdAndUpdate(body.id, {comments: [...foundBlog.comments, body.comment]}, {new: true})
+  await changedBlog.save()
+
+  return response.status(200).send(changedBlog);
+})
 
 module.exports = BlogsRoute;
